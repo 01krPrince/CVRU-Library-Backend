@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/borrow-records")
+@RequestMapping("/api/borrow")
 @CrossOrigin("*")
 public class BorrowRecordController {
 
@@ -25,26 +25,26 @@ public class BorrowRecordController {
         return new ResponseEntity<>(createdRecord, HttpStatus.CREATED);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("getRecordById")
     public ResponseEntity<BorrowRecord> getBorrowRecord(@PathVariable String id) {
         Optional<BorrowRecord> borrowRecord = borrowRecordService.findById(id);
         return borrowRecord.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    @GetMapping
+    @GetMapping("getAll")
     public ResponseEntity<List<BorrowRecord>> getAllBorrowRecords() {
         List<BorrowRecord> borrowRecords = borrowRecordService.findAllBorrowRecords();
         return new ResponseEntity<>(borrowRecords, HttpStatus.OK);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/updateBy{id}")
     public ResponseEntity<BorrowRecord> updateBorrowRecord(@PathVariable String id, @Valid @RequestBody BorrowRecord borrowRecord) {
         BorrowRecord updatedRecord = borrowRecordService.updateBorrowRecord(id, borrowRecord);
         return new ResponseEntity<>(updatedRecord, HttpStatus.OK);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/deleteBy{id}")
     public ResponseEntity<Void> deleteBorrowRecord(@PathVariable String id) {
         borrowRecordService.deleteBorrowRecord(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -59,6 +59,12 @@ public class BorrowRecordController {
     @GetMapping("/book/{bookId}")
     public ResponseEntity<List<BorrowRecord>> getBorrowRecordsByBook(@PathVariable String bookId) {
         List<BorrowRecord> borrowRecords = borrowRecordService.findByBookId(bookId);
+        return new ResponseEntity<>(borrowRecords, HttpStatus.OK);
+    }
+
+    @GetMapping("/returnBook")
+    public ResponseEntity<BorrowRecord> returnBook(@RequestParam String studentId, @RequestParam String bookId) {
+        BorrowRecord borrowRecords = borrowRecordService.returnBook(studentId, bookId);
         return new ResponseEntity<>(borrowRecords, HttpStatus.OK);
     }
 }

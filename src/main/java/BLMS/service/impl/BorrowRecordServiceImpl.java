@@ -43,6 +43,15 @@ public class BorrowRecordServiceImpl implements BorrowRecordService {
             throw new IllegalStateException("No available copies of the book");
         }
 
+        List<BorrowRecord> borrowHistory = borrowRecordRepository.findByStudentId(studentId);
+        for(BorrowRecord i : borrowHistory) {
+            if(i.getBookId().equals(bookId) && i.getStudentId().equals(studentId)) {
+                if (!i.isReturned()) {
+                    throw new IllegalStateException("Student " + studentId + " already has this book (ID: " + bookId + ").");
+                }
+            }
+        }
+
         BorrowRecord newBorrowRecord = new BorrowRecord();
         newBorrowRecord.setBookId(bookId);
         newBorrowRecord.setStudentId(studentId);
@@ -159,5 +168,34 @@ public class BorrowRecordServiceImpl implements BorrowRecordService {
             throw new IllegalArgumentException("Book ID cannot be null or empty");
         }
         return borrowRecordRepository.findByBookId(bookId);
+    }
+
+    @Override
+    public BorrowRecord returnBook(String studentId, String bookId) {
+        if (bookId == null || studentId == null) {
+            throw new IllegalArgumentException("Book ID and Student ID are required");
+        }
+
+        Student student = userRepository.findById(studentId)
+                .orElseThrow(() -> new NoSuchElementException("Student not found with ID: " + studentId));
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new NoSuchElementException("Book not found with ID: " + bookId));
+
+        if (book.getAvailableCopies() <= 0) {
+            throw new IllegalStateException("No available copies of the book");
+        }
+
+        List<BorrowRecord> borrowHistory = borrowRecordRepository.findByStudentId(studentId);
+        for(BorrowRecord i : borrowHistory) {
+            if(i.getBookId().equals(bookId) && i.getStudentId().equals(studentId)) {
+                if (i.isReturned()) {
+                    i.setReturned(true);
+                    book.setAvailableCopies(book.getAvailableCopies() + 1);
+                    bookRepository.save(book);
+                }
+            }
+        }
+
+        return null;
     }
 }

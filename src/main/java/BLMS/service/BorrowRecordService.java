@@ -14,4 +14,6 @@ public interface BorrowRecordService {
     void deleteBorrowRecord(String id);
     List<BorrowRecord> findByStudentId(String studentId);
     List<BorrowRecord> findByBookId(String bookId);
+
+    BorrowRecord returnBook(String studentId, String bookId);
 }
