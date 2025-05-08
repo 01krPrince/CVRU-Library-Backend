@@ -12,9 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 
 @Service
 public class BorrowRecordServiceImpl implements BorrowRecordService {
@@ -29,46 +28,61 @@ public class BorrowRecordServiceImpl implements BorrowRecordService {
     private BookRepository bookRepository;
 
     @Override
-    public BorrowRecord createBorrowRecord(String studentId, String bookId) {
-        if (bookId == null || studentId == null) {
+    public BorrowRecord createBorrowRecord(String studentId, String isbn) {
+        if (isbn == null || studentId == null) {
             throw new IllegalArgumentException("Book ID and Student ID are required");
         }
 
         Student student = userRepository.findById(studentId)
                 .orElseThrow(() -> new NoSuchElementException("Student not found with ID: " + studentId));
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new NoSuchElementException("Book not found with ID: " + bookId));
+        Book book = bookRepository.findByIsbn(isbn)
+                .orElseThrow(() -> new NoSuchElementException("Book not found with ISBN: " + isbn));
 
         if (book.getAvailableCopies() <= 0) {
             throw new IllegalStateException("No available copies of the book");
         }
 
         List<BorrowRecord> borrowHistory = borrowRecordRepository.findByStudentId(studentId);
-        for(BorrowRecord i : borrowHistory) {
-            if(i.getBookId().equals(bookId) && i.getStudentId().equals(studentId)) {
-                if (!i.isReturned()) {
-                    throw new IllegalStateException("Student " + studentId + " already has this book (ID: " + bookId + ").");
-                }
+        for (BorrowRecord record : borrowHistory) {
+            if (record.getIsbn().equals(isbn) && !record.isReturned()) {
+                throw new IllegalStateException("Student " + studentId + " already has this book (ISBN: " + isbn + ").");
             }
         }
 
+        List<Boolean> copyAvailability = book.getCopyAvailability();
+        int copyIndex = -1;
+        for (int i = 0; i < copyAvailability.size(); i++) {
+            if (copyAvailability.get(i)) {
+                copyAvailability.set(i, false);
+                copyIndex = i;
+                break;
+            }
+        }
+
+        if (copyIndex == -1) {
+            throw new IllegalStateException("All copies are marked as unavailable despite availableCopies > 0.");
+        }
+
+        // Create and save new borrow record
         BorrowRecord newBorrowRecord = new BorrowRecord();
-        newBorrowRecord.setBookId(bookId);
+        newBorrowRecord.setIsbn(isbn);
         newBorrowRecord.setStudentId(studentId);
         newBorrowRecord.setBorrowDate(LocalDate.now());
         newBorrowRecord.setDueDate(LocalDate.now().plusDays(7));
         newBorrowRecord.setReturned(false);
         newBorrowRecord.setFine(0.0);
+        newBorrowRecord.setCopyIndex(copyIndex);
 
         newBorrowRecord = borrowRecordRepository.save(newBorrowRecord);
-
-        book.setAvailableCopies(book.getAvailableCopies() - 1);
-        if (student.getBorrowRecordIds() == null) {
-            student.setBorrowRecordIds(new java.util.ArrayList<>());
-        }
         student.getBorrowRecordIds().add(newBorrowRecord.getBorrowedId());
 
+        book.setAvailableCopies(book.getAvailableCopies() - 1);
+        book.setCopyAvailability(copyAvailability);
         bookRepository.save(book);
+
+        if (student.getBorrowRecordIds() == null) {
+            student.setBorrowRecordIds(new ArrayList<>());
+        }
         userRepository.save(student);
 
         return newBorrowRecord;
@@ -89,69 +103,12 @@ public class BorrowRecordServiceImpl implements BorrowRecordService {
 
     @Override
     public BorrowRecord updateBorrowRecord(String id, BorrowRecord borrowRecord) {
-        if (id == null || id.trim().isEmpty()) {
-            throw new IllegalArgumentException("ID cannot be null or empty");
-        }
-        if (borrowRecord == null) {
-            throw new IllegalArgumentException("Borrow record cannot be null");
-        }
-
-        // Find existing borrow record
-        BorrowRecord existingRecord = borrowRecordRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Borrow record not found with ID: " + id));
-
-        // Validate student and book existence
-        if (!existingRecord.getStudentId().equals(borrowRecord.getStudentId())) {
-            userRepository.findById(borrowRecord.getStudentId())
-                    .orElseThrow(() -> new NoSuchElementException("Student not found with ID: " + borrowRecord.getStudentId()));
-        }
-        if (!existingRecord.getBookId().equals(borrowRecord.getBookId())) {
-            bookRepository.findById(borrowRecord.getBookId())
-                    .orElseThrow(() -> new NoSuchElementException("Book not found with ID: " + borrowRecord.getBookId()));
-        }
-
-        // Update fields
-        existingRecord.setBookId(borrowRecord.getBookId());
-        existingRecord.setStudentId(borrowRecord.getStudentId());
-        existingRecord.setBorrowDate(borrowRecord.getBorrowDate() != null ? borrowRecord.getBorrowDate() : existingRecord.getBorrowDate());
-        existingRecord.setDueDate(borrowRecord.getDueDate() != null ? borrowRecord.getDueDate() : existingRecord.getDueDate());
-        existingRecord.setReturnDate(borrowRecord.getReturnDate());
-        existingRecord.setReturned(borrowRecord.isReturned()); // Use setReturned
-        existingRecord.setFine(borrowRecord.getFine());
-
-        // If book is returned, update book and student
-        if (borrowRecord.isReturned() && !existingRecord.isReturned()) {
-            Book book = bookRepository.findById(existingRecord.getBookId())
-                    .orElseThrow(() -> new NoSuchElementException("Book not found with ID: " + existingRecord.getBookId()));
-            book.setAvailableCopies(book.getAvailableCopies() + 1);
-            Student student = userRepository.findById(existingRecord.getStudentId())
-                    .orElseThrow(() -> new NoSuchElementException("Student not found with ID: " + existingRecord.getStudentId()));
-            student.getBorrowRecordIds().remove(existingRecord.getBorrowedId());
-            bookRepository.save(book);
-            userRepository.save(student);
-        }
-
-        return borrowRecordRepository.save(existingRecord);
+        return null;
     }
 
     @Override
     public void deleteBorrowRecord(String id) {
-        if (id == null || id.trim().isEmpty()) {
-            throw new IllegalArgumentException("ID cannot be null or empty");
-        }
-        BorrowRecord record = borrowRecordRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Borrow record not found with ID: " + id));
-        if (!record.isReturned()) {
-            Book book = bookRepository.findById(record.getBookId())
-                    .orElseThrow(() -> new NoSuchElementException("Book not found with ID: " + record.getBookId()));
-            book.setAvailableCopies(book.getAvailableCopies() + 1);
-            Student student = userRepository.findById(record.getStudentId())
-                    .orElseThrow(() -> new NoSuchElementException("Student not found with ID: " + record.getStudentId()));
-            student.getBorrowRecordIds().remove(record.getBorrowedId());
-            bookRepository.save(book);
-            userRepository.save(student);
-        }
-        borrowRecordRepository.deleteById(id);
+
     }
 
     @Override
@@ -164,38 +121,85 @@ public class BorrowRecordServiceImpl implements BorrowRecordService {
 
     @Override
     public List<BorrowRecord> findByBookId(String bookId) {
-        if (bookId == null || bookId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Book ID cannot be null or empty");
+        return List.of();
+    }
+
+    public List<BorrowRecord> findByBookISBN(String isbn) {
+        if (isbn == null || isbn.trim().isEmpty()) {
+            throw new IllegalArgumentException("Book ISBN cannot be null or empty");
         }
-        return borrowRecordRepository.findByBookId(bookId);
+        return borrowRecordRepository.findByIsbn(isbn);
     }
 
     @Override
-    public BorrowRecord returnBook(String studentId, String bookId) {
-        if (bookId == null || studentId == null) {
-            throw new IllegalArgumentException("Book ID and Student ID are required");
+    public BorrowRecord returnBook(String studentId, String isbn) {
+        if (isbn == null || studentId == null) {
+            throw new IllegalArgumentException("Book ISBN and Student ID are required");
         }
 
         Student student = userRepository.findById(studentId)
                 .orElseThrow(() -> new NoSuchElementException("Student not found with ID: " + studentId));
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new NoSuchElementException("Book not found with ID: " + bookId));
+        Book book = bookRepository.findByIsbn(isbn)
+                .orElseThrow(() -> new NoSuchElementException("Book not found with ISBN: " + isbn));
 
-        if (book.getAvailableCopies() <= 0) {
-            throw new IllegalStateException("No available copies of the book");
-        }
-
+        // Find the active borrow record (not returned yet) for the given student and ISBN
         List<BorrowRecord> borrowHistory = borrowRecordRepository.findByStudentId(studentId);
-        for(BorrowRecord i : borrowHistory) {
-            if(i.getBookId().equals(bookId) && i.getStudentId().equals(studentId)) {
-                if (i.isReturned()) {
-                    i.setReturned(true);
-                    book.setAvailableCopies(book.getAvailableCopies() + 1);
-                    bookRepository.save(book);
-                }
+        BorrowRecord activeBorrow = null;
+
+        for (BorrowRecord record : borrowHistory) {
+            if (record.getIsbn().equals(isbn) && !record.isReturned()) {
+                activeBorrow = record;
+                break;
             }
         }
 
-        return null;
+        if (activeBorrow == null) {
+            throw new IllegalStateException("Student " + studentId + " has not borrowed this book or already returned it.");
+        }
+
+        // Update return status and fine (if any)
+        activeBorrow.setReturned(true);
+        LocalDate today = LocalDate.now();
+        if (today.isAfter(activeBorrow.getDueDate())) {
+            long overdueDays = ChronoUnit.DAYS.between(activeBorrow.getDueDate(), today);
+            activeBorrow.setFine(overdueDays * 2.0); // e.g., ₹2 per overdue day
+        }
+
+        // Mark the specific book copy as available
+        int copyIndex = activeBorrow.getCopyIndex();
+        List<Boolean> availabilityList = book.getCopyAvailability();
+        if (copyIndex >= 0 && copyIndex < availabilityList.size()) {
+            availabilityList.set(copyIndex, true);
+        } else {
+            throw new IllegalStateException("Invalid copy index found in borrow record.");
+        }
+
+        // Update book's available copies and save changes
+        book.setAvailableCopies(book.getAvailableCopies() + 1);
+        book.setCopyAvailability(availabilityList);
+        bookRepository.save(book);
+
+        // Save updated borrow record
+        borrowRecordRepository.save(activeBorrow);
+
+        return activeBorrow;
     }
+
+    @Override
+    public long booksBorrowedCount(String studentId) {
+        return borrowRecordRepository.findByStudentId(studentId).stream()
+                .filter(record -> !record.isReturned())
+                .count();
+    }
+
+    @Override
+    public BorrowRecord upcomingDueDate(String studentId) {
+        return borrowRecordRepository.findByStudentId(studentId).stream()
+                .filter(record -> !record.isReturned())                          // Not yet returned
+                .filter(record -> record.getDueDate().isAfter(LocalDate.now())) // Only future due dates
+                .min(Comparator.comparing(BorrowRecord::getDueDate))            // Earliest due date
+                .orElse(null);                                                  // Return null if none
+    }
+
+
 }

@@ -26,5 +26,6 @@ public interface StudentService {
 
     Object loginUser(String email, String password);
 
-    long totleStudentCount();
+    long totalRegisteredStudents();
+
 }

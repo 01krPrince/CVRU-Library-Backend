@@ -9,19 +9,21 @@ import java.util.Optional;
 
 public interface BookService {
     Book addBook(AddBookRequest addBookRequest, String adminId);
+
     Optional<Book> findById(String id);
+
     List<Book> findAllBooks();
+
     Book updateBook(String isbn, AddBookRequest updateBookRequest, String adminId);
+
     void deleteBook(String isbn, String adminId);
+
     List<Book> searchBooks(String searchEle);
 
     Optional<Book> searchByISBN(String isbn);
 
-    long totleBookCount();
+    Long totalBookCount();
 
-    long totleIssued();
+    Long totalBookIssuedCount();
 
-    Map<String, Long> adminDashboard(String adminId);
-
-    Map<String, Long> studentDashboard(String studentId);
 }

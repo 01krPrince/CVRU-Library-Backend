@@ -19,8 +19,11 @@ public class BorrowRecord {
     @Id
     private String borrowedId;
 
-    @NotBlank(message = "Book ID is required")
-    private String bookId;
+    @NotBlank(message = "Book ISBN is required")
+    private String isbn;
+
+    @NotBlank(message = "Book copyNo is required")
+    private int CopyIndex;
 
     @NotBlank(message = "Student ID is required")
     private String studentId;
@@ -33,7 +36,7 @@ public class BorrowRecord {
 
     private LocalDate returnDate;
 
-    private boolean isReturned = false;
+    private boolean returned = false;
 
     private double fine;
 }

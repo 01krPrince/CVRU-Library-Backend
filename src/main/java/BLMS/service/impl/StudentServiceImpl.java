@@ -6,7 +6,6 @@ import BLMS.model.request.StudentRegisterRequest;
 import BLMS.repository.AdminRepository;
 import BLMS.repository.UserRepository;
 import BLMS.service.StudentService;
-import org.bson.types.Code;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -187,7 +186,8 @@ public class StudentServiceImpl implements StudentService {
         return userRepository.save(student);
     }
 
-    public long totleStudentCount() {
+    public long totalRegisteredStudents() {
         return userRepository.count();
     }
+
 }

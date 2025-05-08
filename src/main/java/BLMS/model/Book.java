@@ -10,7 +10,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Document(collection = "books")
 @Data
@@ -51,4 +52,5 @@ public class Book {
     @NotNull(message = "Added date is required")
     private LocalDate addedDate;
 
+    private List<Boolean> copyAvailability = new ArrayList<>();
 }

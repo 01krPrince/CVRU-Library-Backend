@@ -1,5 +1,6 @@
 package BLMS.controller;
 
+import BLMS.model.Book;
 import BLMS.model.BorrowRecord;
 import BLMS.service.BorrowRecordService;
 import jakarta.validation.Valid;
@@ -8,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,8 +22,8 @@ public class BorrowRecordController {
     private BorrowRecordService borrowRecordService;
 
     @PostMapping("BorrowBook")
-    public ResponseEntity<BorrowRecord> createBorrowRecord(@RequestParam String studentId, @RequestParam String bookId) {
-        BorrowRecord createdRecord = borrowRecordService.createBorrowRecord(studentId, bookId);
+    public ResponseEntity<BorrowRecord> createBorrowRecord(@RequestParam String studentId, @RequestParam String isbn) {
+        BorrowRecord createdRecord = borrowRecordService.createBorrowRecord(studentId, isbn);
         return new ResponseEntity<>(createdRecord, HttpStatus.CREATED);
     }
 
@@ -63,8 +65,19 @@ public class BorrowRecordController {
     }
 
     @GetMapping("/returnBook")
-    public ResponseEntity<BorrowRecord> returnBook(@RequestParam String studentId, @RequestParam String bookId) {
-        BorrowRecord borrowRecords = borrowRecordService.returnBook(studentId, bookId);
+    public ResponseEntity<BorrowRecord> returnBook(@RequestParam String studentId, @RequestParam String isbn) {
+        BorrowRecord borrowRecords = borrowRecordService.returnBook(studentId, isbn);
         return new ResponseEntity<>(borrowRecords, HttpStatus.OK);
     }
+
+    @GetMapping("/bookBorrowedCount")
+    public long booksBorrowedCount(String studentId){
+        return borrowRecordService.booksBorrowedCount(studentId);
+    }
+
+    @GetMapping("/upcomingDueBook")
+    public BorrowRecord upcomingDueDate(@RequestParam String studentId) {
+        return borrowRecordService.upcomingDueDate(studentId);
+    }
+
 }

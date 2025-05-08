@@ -9,5 +9,6 @@ import java.util.List;
 @Repository
 public interface BorrowRecordRepository extends MongoRepository<BorrowRecord, String> {
     List<BorrowRecord> findByStudentId(String studentId);
-    List<BorrowRecord> findByBookId(String bookId);
+
+    List<BorrowRecord> findByIsbn(String isbn);
 }

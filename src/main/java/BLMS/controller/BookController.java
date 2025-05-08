@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -23,8 +22,9 @@ public class BookController {
 
     // Add a new book
     @PostMapping("/addBook")
-    public ResponseEntity<Book> addBook(@Valid @RequestBody AddBookRequest request, String adminId) {
-        Book addedBook = bookService.addBook(request,adminId);
+    public ResponseEntity<Book> addBook(@Valid @RequestBody AddBookRequest request,
+                                        @RequestParam String adminId) {
+        Book addedBook = bookService.addBook(request, adminId);
         return new ResponseEntity<>(addedBook, HttpStatus.CREATED);
     }
 
@@ -45,44 +45,44 @@ public class BookController {
 
     // Update book details
     @PutMapping("/updateByISBN")
-    public ResponseEntity<Book> updateBook(
-            @RequestParam String isbn,
-            @Valid @RequestBody AddBookRequest updateBookRequest,
-            @RequestParam("adminId") String adminId) {
-
+    public ResponseEntity<Book> updateBook(@RequestParam String isbn,
+                                           @Valid @RequestBody AddBookRequest updateBookRequest,
+                                           @RequestParam String adminId) {
         Book updatedBook = bookService.updateBook(isbn, updateBookRequest, adminId);
         return new ResponseEntity<>(updatedBook, HttpStatus.OK);
     }
 
     // Delete book
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBook(@RequestParam String isbn, @RequestParam String adminId) {
+    @DeleteMapping
+    public ResponseEntity<Void> deleteBook(@RequestParam String isbn,
+                                           @RequestParam String adminId) {
         bookService.deleteBook(isbn, adminId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    // Search books by title or author or isbn
+    // Search books by title, author or ISBN
     @GetMapping("/search")
-    public ResponseEntity<List<Book>> searchBooks(
-            @RequestParam String searchEle) {
+    public ResponseEntity<List<Book>> searchBooks(@RequestParam String searchEle) {
         List<Book> books = bookService.searchBooks(searchEle);
         return new ResponseEntity<>(books, HttpStatus.OK);
     }
 
+    // Find book by ISBN
     @GetMapping("/searchByISBN")
     public ResponseEntity<Optional<Book>> findByISBN(@RequestParam String isbn) {
         Optional<Book> book = bookService.searchByISBN(isbn);
         return new ResponseEntity<>(book, HttpStatus.OK);
     }
 
-    @GetMapping("/adminDashboard")
-    public Map<String, Long> adminDashboard(@RequestParam String adminId){
-        return bookService.adminDashboard(adminId);
+    // Get total book count
+    @GetMapping("/totalBookCount")
+    public ResponseEntity<Long> totalBookCount() {
+        return new ResponseEntity<>(bookService.totalBookCount(), HttpStatus.OK);
     }
 
-    @GetMapping("/studentDashboard")
-    public Map<String, Long> studentDashboard(@RequestParam String studentId){
-        return bookService.studentDashboard(studentId);
+    // Get total issued book count
+    @GetMapping("/totalBookIssuedCount")
+    public ResponseEntity<Long> totalBookIssuedCount() {
+        return new ResponseEntity<>(bookService.totalBookIssuedCount(), HttpStatus.OK);
     }
-
 }
