@@ -107,11 +107,6 @@ public class BorrowRecordServiceImpl implements BorrowRecordService {
     }
 
     @Override
-    public void deleteBorrowRecord(String id) {
-
-    }
-
-    @Override
     public List<BorrowRecord> findByStudentId(String studentId) {
         if (studentId == null || studentId.trim().isEmpty()) {
             throw new IllegalArgumentException("Student ID cannot be null or empty");

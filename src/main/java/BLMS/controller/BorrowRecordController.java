@@ -1,6 +1,5 @@
 package BLMS.controller;
 
-import BLMS.model.Book;
 import BLMS.model.BorrowRecord;
 import BLMS.service.BorrowRecordService;
 import jakarta.validation.Valid;
@@ -9,7 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,12 +42,6 @@ public class BorrowRecordController {
     public ResponseEntity<BorrowRecord> updateBorrowRecord(@PathVariable String id, @Valid @RequestBody BorrowRecord borrowRecord) {
         BorrowRecord updatedRecord = borrowRecordService.updateBorrowRecord(id, borrowRecord);
         return new ResponseEntity<>(updatedRecord, HttpStatus.OK);
-    }
-
-    @DeleteMapping("/deleteBy{id}")
-    public ResponseEntity<Void> deleteBorrowRecord(@PathVariable String id) {
-        borrowRecordService.deleteBorrowRecord(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @GetMapping("/student/{studentId}")

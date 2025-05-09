@@ -9,11 +9,15 @@ import java.util.Optional;
 
 public interface BorrowRecordService {
     BorrowRecord createBorrowRecord(String studentId, String isbn);
+
     Optional<BorrowRecord> findById(String id);
+
     List<BorrowRecord> findAllBorrowRecords();
+
     BorrowRecord updateBorrowRecord(String id, BorrowRecord borrowRecord);
-    void deleteBorrowRecord(String id);
+
     List<BorrowRecord> findByStudentId(String studentId);
+
     List<BorrowRecord> findByBookId(String bookId);
 
     BorrowRecord returnBook(String studentId, String isbn);
