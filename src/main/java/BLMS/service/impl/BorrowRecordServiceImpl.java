@@ -72,6 +72,7 @@ public class BorrowRecordServiceImpl implements BorrowRecordService {
         newBorrowRecord.setReturned(false);
         newBorrowRecord.setFine(0.0);
         newBorrowRecord.setCopyIndex(copyIndex);
+        newBorrowRecord.setDueDate(LocalDate.now().plusDays(7));
 
         newBorrowRecord = borrowRecordRepository.save(newBorrowRecord);
         student.getBorrowRecordIds().add(newBorrowRecord.getBorrowedId());
